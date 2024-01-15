@@ -8,4 +8,4 @@ Following the [sleap instructions](https://sleap.ai/) and used conda for install
 
 `conda create -y -n sleap -c conda-forge -c nvidia -c sleap -c anaconda sleap`
 
-
+This takes a while. 
