@@ -16,9 +16,9 @@ Read a bit more on the sleap website and yep, need to to use mamba.
 
 Used this to install mamba: 
 
-`conda update -n base conda
-conda install -n base conda-libmamba-solver
-conda config --set solver libmamba`
+`conda update -n base conda`
+`conda install -n base conda-libmamba-solver`
+`conda config --set solver libmamba`
 
 then ran this to prepare the conda virtual env: 
 
