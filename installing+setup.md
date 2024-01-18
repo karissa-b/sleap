@@ -1,5 +1,7 @@
 # SETUP
 
+## phoenix 
+
 logged into phoenix
 
 started a `screen` session
@@ -28,6 +30,25 @@ then ran this to prepare the conda virtual env:
 
 This has worked! 
 
+Also want to install locally for the labelling GUI
+
+## local install
+
+`conda update -n base conda`
+
+`conda install -n base conda-libmamba-solver`
+
+`conda config --set solver libmamba`
 
 
+Installed `sleap` using this command: 
 
+`conda create -y -n sleap -c conda-forge -c anaconda -c sleap sleap=1.3.3` 
+
+Checked it installed using this command
+
+`conda activate sleap`
+
+`sleap-label`
+
+This took a while. But eventually opened a GUI for me. 
