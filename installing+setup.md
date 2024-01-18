@@ -34,21 +34,34 @@ Also want to install locally for the labelling GUI
 
 ## local install
 
-`conda update -n base conda`
+```conda update -n base conda```
 
-`conda install -n base conda-libmamba-solver`
+```conda install -n base conda-libmamba-solver```
 
-`conda config --set solver libmamba`
+```conda config --set solver libmamba```
 
 
 Installed `sleap` using this command: 
 
-`conda create -y -n sleap -c conda-forge -c anaconda -c sleap sleap=1.3.3` 
+```conda create -y -n sleap -c conda-forge -c anaconda -c sleap sleap=1.3.3```
 
 Checked it installed using this command
 
-`conda activate sleap`
+```conda activate sleap```
 
-`sleap-label`
+```sleap-label```
+
+Output: 
+
+```
+Saving config: /Users/karissabarthelson/.sleap/1.3.3/preferences.yaml
+
+Software versions:
+SLEAP: 1.3.3
+TensorFlow: 2.9.1
+Numpy: 1.22.4
+Python: 3.9.15
+OS: macOS-10.15.7-x86_64-i386-64bit
+```
 
 This took a while. But eventually opened a GUI for me. 
