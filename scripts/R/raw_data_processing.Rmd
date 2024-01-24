@@ -1,0 +1,338 @@
+---
+title: "Raw data processing"
+author: "Angel Allen"
+date: "2023-09-21"
+output: html_document
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(readxl)
+```
+
+### Importing and first look
+
+First I'm going to import one of the raw data files for zone transitions to see what it looks like
+
+```{r}
+data <- read_excel("raw_data/Raw data-20230914_lrrk2-6m_AA-Trial     1.xlsx", skip = 31)
+
+tibble(c(1:14), colnames(data))
+```
+
+Notes:
+- Trial time and recording time appear to be the same so I will omit one
+- Will be renaming the columns for easier handling
+- Omitting area, area change, and elongation data for now as I do not think that these are particularly of interest
+
+```{r}
+# Using a named vector to rename the columns
+lookup <- colnames(data[8:13])
+names(lookup) <- c("AB", "AC", "BA", "BC", "CA", "CB")
+
+data1 <- data %>%
+  rename(all_of(lookup)) %>%
+  dplyr::select(time = 1, x = 3, y = 4, 8:13) %>%
+  mutate(across(everything(), as.numeric))
+data1
+```
+
+I want to see whether there is more than one zone transition recorded at a time
+
+```{r}
+# dropping the top row because there are NaN values
+data2 <- data1 %>%
+  mutate(totals = rowSums(data1[,4:9], na.rm = T))
+max(data2[,"totals"])
+```
+
+Yes, only one zone transition at a time
+
+Now I need to get the tetragrams. First I will filter all of the rows where there was not a zone transition
+
+```{r}
+data3 <- data2 %>%
+  dplyr::filter(totals == 1) %>%
+  dplyr::select(-totals)
+```
+
+Each row now has a 1 in the column that gives the information we need to determine what turn they made
+See the image in lrrk2 6m behaviour (3D400515) for zone mapping
+
+```{r}
+data4 <- data3 %>%
+  mutate(
+    zone_change = names(.[,4:9])[max.col(.[,4:9])],
+    turn = case_when(
+      zone_change == "AB" ~ "R",
+      zone_change == "AC" ~ "L",
+      zone_change == "BA" ~ "L",
+      zone_change == "BC" ~ "R",
+      zone_change == "CA" ~ "R",
+      zone_change == "CB" ~ "L",
+    )
+  )
+
+write_csv(data4, "processed_data/processed_1.csv")
+```
+
+Next I will generate the tetragrams
+
+```{r}
+data5 <- data4 %>% 
+  mutate(tetragram = str_c(turn, lead(turn), lead(turn,2), lead(turn,3))) %>%
+  dplyr::select(time, tetragram)
+```
+
+Notes:
+- I need this pipeline to take into account all of the data from each fish, which is split across multiple files
+- The tetragrams can then be summarised by time bin
+
+### Handling multiple files
+
+The data for each fish is split across multiple files, as the Zantiks machine split each trial into multiple videos and each video was analysed in EthoVision separately. Therefore, I will start off by renaming the files more appropriately.
+
+- There are 3 trials total with 6 videos each (3 videos per machine)
+- I will name them as trial_number.machine_number-video (eg. trial 1 machine 2 is 1.2-1, 1.2-2, and 1.2-3)
+- The final data structure should have the following attributes:
+
+| Attr.            | source              |
+| ---------------- | ------------------- |
+| fish_id          | sheet of excel file |
+| trial            | file name           |
+| time             | raw data            |
+| zone transitions | raw data            | 
+
+```{r}
+dir("raw_data")
+
+trials <- tibble(
+  filename = grep("Raw data", dir("raw_data"), value = T),
+  trialnum = rep(c("1.1", "1.2", "2.1", "2.2", "3.1", "3.2"), each = 3),
+  vidnum = rep(c(1:3), times = 6)
+)
+trials
+```
+
+I'm now going to figure out how multiple sheets can be imported with read_excel()
+
+```{r}
+# read_excel(paste0("raw_data/", trials$filename[1]), sheet = 1) %>% view()
+# this shows that the data starts on row 34, so I will skip 33 rows
+cols <- c("time", "x", "x", "x", "x", "x", "x", "AB", "AC", "BA", "BC", "CA", "CB", "x")
+
+read_excel(paste0("raw_data/", trials$filename[1]), sheet = 1, col_names = cols, skip = 33) %>%
+  select(!starts_with("x"))
+```
+This nicely imports the data for a single sheet (fish). I will try a loop to iterate through the sheets of each file. There should be 8 sheets for the 8 fish in each trial.
+
+```{r}
+excel_sheets(paste0("raw_data/", trials$filename[1]))
+
+list1 <- vector("list", nrow(trials))
+for (i in 1:nrow(trials)) {
+  list2 <- vector("list", 8)
+  print(paste0("Reading file: ", trials$filename[i]))
+  for (j in 1:8) {
+    print(paste0("Reading trial: ", j))
+    x <- read_excel(paste0("raw_data/", trials$filename[i]), sheet = j, col_names = cols, skip = 33) %>%
+      select(!starts_with("x")) %>%
+      mutate(across(everything(), as.numeric)) %>%
+      mutate(
+        sheet = j,
+        trial = trials$trialnum[i],
+        video = trials$vidnum[i]
+      )
+    list2[[j]] <- x
+  }
+  list1[[i]] <- do.call(rbind, list2)
+}
+data <- do.call(rbind, list1)
+```
+
+- There are 15,000 rows for each fish in trial 1
+- An error message appeared for file 8 trial 2, so ran `read_excel(paste0("raw_data/", trials$filename[8])) %>% view` to check what might have gone wrong
+	- Looks like there were tracking issues: ![[Media/Images/Pasted image 20230921131031.png|500]]
+	- I will make sure that other files are okay by checking the number of rows after import
+- The final dataset has 1,554,920 rows
+
+I now need to assign `fish_id`s based on their trial and sheet numbers. I will use excel to do this:
+
+```{r}
+meta <- read_csv("metadata.csv", col_types = "ff-")
+meta$trial <- c(rep(c("1.1", "1.2", "2.1", "2.2"), each = 8), rep("3.1", 5), rep("3.2", 4))
+meta$sheet <- c(rep(c(1:8), 4), 1:5, 1:4)
+meta
+```
+
+```{r}
+data2 <- left_join(data, meta, by = c("trial", "sheet")) %>%
+  mutate(across(c(sheet, trial, video), as.factor))
+```
+
+I now want to do some checks to make sure that nothing strange has happened during data processing
+
+```{r}
+str(data2)
+table(data2$fish_id, data2$trial) # there are between 32,390 - 32,394 rows per fish
+table(data2$fish_id, data2$time)[,1:10] # it looks like time bins are consistent between fish and files
+table(data2$time) %>% summary() # shows that all time bins occur the same number of times
+summary(data2)
+```
+
+It was a good job that I did these tests, several major issues were caught caused by errors in the for loops (mixing up i and j)
+
+Now I will remove rows without a corresponding fish (empty Y-mazes)
+
+```{r}
+data3 <- data2 %>%
+  drop_na(fish_id)
+
+nrow(data2)
+nrow(data3)
+
+nrow(data2) - nrow(data3)
+
+table(data3$fish_id, data3$trial) # this matches, so no rows with a fish_id were removed
+```
+
+This removed 226,761 rows
+
+I should define the time bins now
+
+```{r}
+ggplot(data3, aes(x = time, fill = trial)) +
+  geom_histogram() +
+  facet_wrap(trial~video, ncol = 6)
+```
+
+```{r}
+max(data3[data3$video == 3,]$time)
+
+x <- table(data3$trial, data3$time)
+x[,c(1:10)]
+apply(x, 1, unique)
+```
+
+- This shows that the time for trial 3 does not exceed 797.825
+- There is some variation in the time reached for all videos, hopefully this will not be an issue
+
+Will now calculate the "real" time for the whole trial rather than the time relative to the video start.
+
+```{r}
+max(data3$time)/60 # 43 min - the time is in seconds
+
+times <- data3 %>%
+  group_by(trial, video) %>%
+  summarise(max_time = max(time)) %>%
+  mutate(
+    max_time2 = cumsum(max_time),
+    base_time = lag(max_time2, default = 0)
+  ) %>%
+  ungroup()
+
+max(times$max_time2)
+max(times$max_time2)/60 # this is almost 90 minutes!
+times
+
+data4 <- left_join(data3, times[,c("trial", "video", "base_time")], by = c("trial", "video")) %>%
+  mutate(time2 = base_time + time)
+```
+
+Doing some checks again
+
+```{r}
+ggplot(data4, aes(x = time2, fill = video)) +
+  geom_histogram() +
+  facet_wrap(~trial)
+```
+Much better!
+
+Now I will calculate the time bins for 5 minutes each
+
+```{r}
+bins <- tibble(
+  bin = c(1:18),
+  max_time = seq(300, 5400, by = 300)
+)
+bins
+
+data4$bin <- cut(data4$time2, breaks = c(0, bins$max_time), labels = bins$bin, include.lowest = T)
+```
+
+```{r}
+data4 %>%
+  group_by(bin) %>%
+  summarise(
+    min_time2 = min(time2),
+    max_time2 = max(time2)
+  ) %>%
+  ungroup()
+```
+
+Looks good!
+
+Now I need to get the final processed data, which includes the frequencies of each tetragram and different turns.
+
+## Processed tetragram frequencies
+
+```{r}
+data <- data4 %>%
+  filter(rowSums(data4[,2:7], na.rm = T) == 1) %>%
+  mutate(
+    zone_change = names(.[,2:7])[max.col(.[,2:7])],
+    turn = case_when(
+      zone_change == "AB" ~ "R",
+      zone_change == "AC" ~ "L",
+      zone_change == "BA" ~ "L",
+      zone_change == "BC" ~ "R",
+      zone_change == "CA" ~ "R",
+      zone_change == "CB" ~ "L",
+    ),
+    tetragram = str_c(turn, lead(turn), lead(turn,2), lead(turn,3))
+  )
+head(data)
+```
+
+```{r}
+tetragrams <- unique(data$tetragram)
+
+tet_long <- data %>%
+  dplyr::select(fish_id, bin, tetragram) %>%
+  na.omit() %>%
+  group_by(fish_id, bin) %>%
+  table() %>%
+  as.tibble()
+
+tet_wide <- tet_long %>% spread(tetragram, n)
+head(tet_wide)
+
+turn_long <- data %>%
+  dplyr::select(fish_id, bin, turn) %>% 
+  na.omit() %>% 
+  group_by(fish_id, bin) %>% 
+  table() %>% 
+  as.tibble()
+
+turn_wide <- turn_long %>% spread(turn, n)
+head(turn_wide)
+```
+Now to combine for final data
+
+```{r}
+final_data <- tet_wide %>% 
+  left_join(turn_wide, by = c("fish_id", "bin")) %>% 
+  mutate(total_turns = L + R,
+         reps = LLLL + RRRR,
+         alts = RLRL + LRLR,
+         rel_reps = (reps*100)/total_turns,
+         rel_alts = (alts*100)/total_turns,
+         rel_R = (R*100)/total_turns,
+         rel_L = (L*100)/total_turns)
+head(final_data)
+```
+
+

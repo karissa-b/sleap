@@ -1,0 +1,888 @@
+{
+    "plug_in_export_layers": [
+        {
+            "name": "all_settings",
+            "settings": [
+                {
+                    "setting_attributes": {
+                        "setting_sources": [
+                            "session",
+                            "persistent"
+                        ]
+                    },
+                    "name": "main",
+                    "settings": [
+                        {
+                            "default_value": "png",
+                            "display_name": "File extension",
+                            "name": "file_extension",
+                            "adjust_value": true,
+                            "setting_sources": [
+                                "session",
+                                "persistent"
+                            ],
+                            "value": "png",
+                            "type": "file_extension"
+                        },
+                        {
+                            "default_value": "/Users/angel/Documents",
+                            "gui_type": null,
+                            "name": "output_directory",
+                            "tags": [
+                                "ignore_reset"
+                            ],
+                            "setting_sources": [
+                                "session",
+                                "persistent"
+                            ],
+                            "value": "/Users/angel/Documents/20230914_lrrk2-6m_ymaze/resources/masks/arenas",
+                            "display_name": "Output directory",
+                            "type": "string"
+                        },
+                        {
+                            "default_value": "[layer name]",
+                            "gui_type": null,
+                            "description": "Layer filename pattern (empty string = layer name)",
+                            "setting_sources": [
+                                "session",
+                                "persistent"
+                            ],
+                            "value": "[layer name]",
+                            "display_name": "Layer filename pattern",
+                            "type": "filename_pattern",
+                            "name": "layer_filename_pattern"
+                        },
+                        {
+                            "default_value": {},
+                            "display_name": "Selected layers",
+                            "name": "selected_layers",
+                            "setting_sources": [
+                                "session",
+                                "persistent"
+                            ],
+                            "value": {
+                                "/Users/angel/Documents/20230914_lrrk2-6m_ymaze/resources/gimp/arenas.xcf": [
+                                    [
+                                        "Layer",
+                                        "094356/arena8 #1"
+                                    ]
+                                ]
+                            },
+                            "pdb_type": null,
+                            "type": "images_and_gimp_items"
+                        },
+                        {
+                            "default_value": "rename_new",
+                            "display_name": "Overwrite mode (non-interactive run mode only)",
+                            "name": "overwrite_mode",
+                            "setting_sources": [
+                                "session",
+                                "persistent"
+                            ],
+                            "items": [
+                                [
+                                    "replace",
+                                    "_Replace",
+                                    0
+                                ],
+                                [
+                                    "skip",
+                                    "_Skip",
+                                    1
+                                ],
+                                [
+                                    "rename_new",
+                                    "Rename _new file",
+                                    2
+                                ],
+                                [
+                                    "rename_existing",
+                                    "Rename _existing file",
+                                    3
+                                ]
+                            ],
+                            "value": 0,
+                            "type": "enum"
+                        },
+                        {
+                            "default_value": {
+                                "foreground": "Foreground",
+                                "background": "Background"
+                            },
+                            "gui_type": null,
+                            "name": "available_tags",
+                            "setting_sources": [
+                                "session",
+                                "persistent"
+                            ],
+                            "value": {
+                                "foreground": "Foreground",
+                                "background": "Background"
+                            },
+                            "pdb_type": null,
+                            "type": "dict"
+                        },
+                        {
+                            "default_value": false,
+                            "gui_type": null,
+                            "name": "edit_mode",
+                            "setting_sources": [
+                                "session",
+                                "persistent"
+                            ],
+                            "value": false,
+                            "pdb_type": null,
+                            "type": "bool"
+                        },
+                        {
+                            "default_value": "4.0.2",
+                            "gui_type": null,
+                            "name": "plugin_version",
+                            "setting_sources": [
+                                "session",
+                                "persistent"
+                            ],
+                            "value": "4.0.2",
+                            "pdb_type": null,
+                            "type": "string"
+                        },
+                        {
+                            "setting_attributes": {
+                                "setting_sources": null,
+                                "pdb_type": null
+                            },
+                            "name": "procedures",
+                            "settings": [
+                                {
+                                    "setting_attributes": {
+                                        "setting_sources": null,
+                                        "pdb_type": null
+                                    },
+                                    "tags": [
+                                        "action",
+                                        "procedure"
+                                    ],
+                                    "name": "use_layer_size",
+                                    "settings": [
+                                        {
+                                            "default_value": "",
+                                            "gui_type": null,
+                                            "name": "function",
+                                            "setting_sources": null,
+                                            "value": "",
+                                            "pdb_type": null,
+                                            "type": "string"
+                                        },
+                                        {
+                                            "default_value": "builtin",
+                                            "gui_type": null,
+                                            "name": "origin",
+                                            "setting_sources": null,
+                                            "items": [
+                                                [
+                                                    "builtin",
+                                                    "Built-in"
+                                                ],
+                                                [
+                                                    "gimp_pdb",
+                                                    "GIMP PDB procedure"
+                                                ]
+                                            ],
+                                            "value": 0,
+                                            "pdb_type": null,
+                                            "type": "enum"
+                                        },
+                                        {
+                                            "setting_attributes": {
+                                                "setting_sources": null,
+                                                "pdb_type": null
+                                            },
+                                            "name": "arguments",
+                                            "settings": []
+                                        },
+                                        {
+                                            "default_value": true,
+                                            "name": "enabled",
+                                            "setting_sources": null,
+                                            "type": "bool",
+                                            "value": false,
+                                            "pdb_type": null
+                                        },
+                                        {
+                                            "default_value": "Use layer size",
+                                            "gui_type": null,
+                                            "name": "display_name",
+                                            "tags": [
+                                                "ignore_initialize_gui"
+                                            ],
+                                            "setting_sources": null,
+                                            "value": "Use layer size",
+                                            "pdb_type": null,
+                                            "type": "string"
+                                        },
+                                        {
+                                            "default_value": null,
+                                            "gui_type": null,
+                                            "name": "description",
+                                            "setting_sources": null,
+                                            "value": null,
+                                            "pdb_type": null,
+                                            "type": "string"
+                                        },
+                                        {
+                                            "default_value": [
+                                                "default_procedures"
+                                            ],
+                                            "gui_type": null,
+                                            "name": "action_groups",
+                                            "nullable": true,
+                                            "setting_sources": null,
+                                            "value": [
+                                                "default_procedures"
+                                            ],
+                                            "pdb_type": null,
+                                            "type": "list"
+                                        },
+                                        {
+                                            "default_value": false,
+                                            "gui_type": "expander",
+                                            "name": "more_options_expanded",
+                                            "setting_sources": null,
+                                            "value": false,
+                                            "pdb_type": null,
+                                            "display_name": "_More options",
+                                            "type": "bool"
+                                        },
+                                        {
+                                            "default_value": true,
+                                            "display_name": "Enable for previews",
+                                            "name": "enabled_for_previews",
+                                            "setting_sources": null,
+                                            "value": true,
+                                            "pdb_type": null,
+                                            "type": "bool"
+                                        },
+                                        {
+                                            "default_value": false,
+                                            "gui_type": null,
+                                            "name": "display_options_on_create",
+                                            "setting_sources": null,
+                                            "value": false,
+                                            "pdb_type": null,
+                                            "type": "bool"
+                                        },
+                                        {
+                                            "default_value": "use_layer_size",
+                                            "gui_type": null,
+                                            "name": "orig_name",
+                                            "setting_sources": null,
+                                            "value": "use_layer_size",
+                                            "pdb_type": null,
+                                            "type": "string"
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "setting_attributes": {
+                                "setting_sources": null,
+                                "pdb_type": null
+                            },
+                            "name": "constraints",
+                            "settings": [
+                                {
+                                    "setting_attributes": {
+                                        "setting_sources": null,
+                                        "pdb_type": null
+                                    },
+                                    "tags": [
+                                        "action",
+                                        "constraint"
+                                    ],
+                                    "name": "selected_in_preview",
+                                    "settings": [
+                                        {
+                                            "default_value": "",
+                                            "gui_type": null,
+                                            "name": "function",
+                                            "setting_sources": null,
+                                            "value": "",
+                                            "pdb_type": null,
+                                            "type": "string"
+                                        },
+                                        {
+                                            "default_value": "builtin",
+                                            "gui_type": null,
+                                            "name": "origin",
+                                            "setting_sources": null,
+                                            "items": [
+                                                [
+                                                    "builtin",
+                                                    "Built-in"
+                                                ],
+                                                [
+                                                    "gimp_pdb",
+                                                    "GIMP PDB procedure"
+                                                ]
+                                            ],
+                                            "value": 0,
+                                            "pdb_type": null,
+                                            "type": "enum"
+                                        },
+                                        {
+                                            "setting_attributes": {
+                                                "setting_sources": null,
+                                                "pdb_type": null
+                                            },
+                                            "name": "arguments",
+                                            "settings": [
+                                                {
+                                                    "gui_type": null,
+                                                    "name": "selected_layers",
+                                                    "setting_sources": null,
+                                                    "value": [
+                                                        11
+                                                    ],
+                                                    "pdb_type": null,
+                                                    "display_name": "Selected layers",
+                                                    "type": "set"
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            "default_value": true,
+                                            "name": "enabled",
+                                            "setting_sources": null,
+                                            "type": "bool",
+                                            "value": true,
+                                            "pdb_type": null
+                                        },
+                                        {
+                                            "default_value": "Selected in preview",
+                                            "gui_type": null,
+                                            "name": "display_name",
+                                            "tags": [
+                                                "ignore_initialize_gui"
+                                            ],
+                                            "setting_sources": null,
+                                            "value": "Selected in preview",
+                                            "pdb_type": null,
+                                            "type": "string"
+                                        },
+                                        {
+                                            "default_value": null,
+                                            "gui_type": null,
+                                            "name": "description",
+                                            "setting_sources": null,
+                                            "value": null,
+                                            "pdb_type": null,
+                                            "type": "string"
+                                        },
+                                        {
+                                            "default_value": [
+                                                "default_constraints"
+                                            ],
+                                            "gui_type": null,
+                                            "name": "action_groups",
+                                            "nullable": true,
+                                            "setting_sources": null,
+                                            "value": [
+                                                "default_constraints"
+                                            ],
+                                            "pdb_type": null,
+                                            "type": "list"
+                                        },
+                                        {
+                                            "default_value": false,
+                                            "gui_type": "expander",
+                                            "name": "more_options_expanded",
+                                            "setting_sources": null,
+                                            "value": false,
+                                            "pdb_type": null,
+                                            "display_name": "_More options",
+                                            "type": "bool"
+                                        },
+                                        {
+                                            "default_value": true,
+                                            "display_name": "Enable for previews",
+                                            "name": "enabled_for_previews",
+                                            "setting_sources": null,
+                                            "value": true,
+                                            "pdb_type": null,
+                                            "type": "bool"
+                                        },
+                                        {
+                                            "default_value": false,
+                                            "gui_type": null,
+                                            "name": "display_options_on_create",
+                                            "setting_sources": null,
+                                            "value": false,
+                                            "pdb_type": null,
+                                            "type": "bool"
+                                        },
+                                        {
+                                            "default_value": "selected_in_preview",
+                                            "gui_type": null,
+                                            "name": "orig_name",
+                                            "setting_sources": null,
+                                            "value": "selected_in_preview",
+                                            "pdb_type": null,
+                                            "type": "string"
+                                        },
+                                        {
+                                            "default_value": false,
+                                            "display_name": "Also apply to parent folders",
+                                            "name": "also_apply_to_parent_folders",
+                                            "setting_sources": null,
+                                            "value": false,
+                                            "pdb_type": null,
+                                            "type": "bool"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "setting_attributes": {
+                                        "setting_sources": null,
+                                        "pdb_type": null
+                                    },
+                                    "tags": [
+                                        "action",
+                                        "constraint"
+                                    ],
+                                    "name": "layers",
+                                    "settings": [
+                                        {
+                                            "default_value": "",
+                                            "gui_type": null,
+                                            "name": "function",
+                                            "setting_sources": null,
+                                            "value": "",
+                                            "pdb_type": null,
+                                            "type": "string"
+                                        },
+                                        {
+                                            "default_value": "builtin",
+                                            "gui_type": null,
+                                            "name": "origin",
+                                            "setting_sources": null,
+                                            "items": [
+                                                [
+                                                    "builtin",
+                                                    "Built-in"
+                                                ],
+                                                [
+                                                    "gimp_pdb",
+                                                    "GIMP PDB procedure"
+                                                ]
+                                            ],
+                                            "value": 0,
+                                            "pdb_type": null,
+                                            "type": "enum"
+                                        },
+                                        {
+                                            "setting_attributes": {
+                                                "setting_sources": null,
+                                                "pdb_type": null
+                                            },
+                                            "name": "arguments",
+                                            "settings": []
+                                        },
+                                        {
+                                            "default_value": true,
+                                            "name": "enabled",
+                                            "setting_sources": null,
+                                            "type": "bool",
+                                            "value": true,
+                                            "pdb_type": null
+                                        },
+                                        {
+                                            "default_value": "Layers",
+                                            "gui_type": null,
+                                            "name": "display_name",
+                                            "tags": [
+                                                "ignore_initialize_gui"
+                                            ],
+                                            "setting_sources": null,
+                                            "value": "Layers",
+                                            "pdb_type": null,
+                                            "type": "string"
+                                        },
+                                        {
+                                            "default_value": null,
+                                            "gui_type": null,
+                                            "name": "description",
+                                            "setting_sources": null,
+                                            "value": null,
+                                            "pdb_type": null,
+                                            "type": "string"
+                                        },
+                                        {
+                                            "default_value": [
+                                                "default_constraints"
+                                            ],
+                                            "gui_type": null,
+                                            "name": "action_groups",
+                                            "nullable": true,
+                                            "setting_sources": null,
+                                            "value": [
+                                                "default_constraints"
+                                            ],
+                                            "pdb_type": null,
+                                            "type": "list"
+                                        },
+                                        {
+                                            "default_value": false,
+                                            "gui_type": "expander",
+                                            "name": "more_options_expanded",
+                                            "setting_sources": null,
+                                            "value": false,
+                                            "pdb_type": null,
+                                            "display_name": "_More options",
+                                            "type": "bool"
+                                        },
+                                        {
+                                            "default_value": true,
+                                            "display_name": "Enable for previews",
+                                            "name": "enabled_for_previews",
+                                            "setting_sources": null,
+                                            "value": true,
+                                            "pdb_type": null,
+                                            "type": "bool"
+                                        },
+                                        {
+                                            "default_value": false,
+                                            "gui_type": null,
+                                            "name": "display_options_on_create",
+                                            "setting_sources": null,
+                                            "value": false,
+                                            "pdb_type": null,
+                                            "type": "bool"
+                                        },
+                                        {
+                                            "default_value": "layers",
+                                            "gui_type": null,
+                                            "name": "orig_name",
+                                            "setting_sources": null,
+                                            "value": "layers",
+                                            "pdb_type": null,
+                                            "type": "string"
+                                        },
+                                        {
+                                            "default_value": false,
+                                            "display_name": "Also apply to parent folders",
+                                            "name": "also_apply_to_parent_folders",
+                                            "setting_sources": null,
+                                            "value": false,
+                                            "pdb_type": null,
+                                            "type": "bool"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "setting_attributes": {
+                                        "setting_sources": null,
+                                        "pdb_type": null
+                                    },
+                                    "tags": [
+                                        "action",
+                                        "constraint"
+                                    ],
+                                    "name": "visible",
+                                    "settings": [
+                                        {
+                                            "default_value": "",
+                                            "gui_type": null,
+                                            "name": "function",
+                                            "setting_sources": null,
+                                            "value": "",
+                                            "pdb_type": null,
+                                            "type": "string"
+                                        },
+                                        {
+                                            "default_value": "builtin",
+                                            "gui_type": null,
+                                            "name": "origin",
+                                            "setting_sources": null,
+                                            "items": [
+                                                [
+                                                    "builtin",
+                                                    "Built-in"
+                                                ],
+                                                [
+                                                    "gimp_pdb",
+                                                    "GIMP PDB procedure"
+                                                ]
+                                            ],
+                                            "value": 0,
+                                            "pdb_type": null,
+                                            "type": "enum"
+                                        },
+                                        {
+                                            "setting_attributes": {
+                                                "setting_sources": null,
+                                                "pdb_type": null
+                                            },
+                                            "name": "arguments",
+                                            "settings": []
+                                        },
+                                        {
+                                            "default_value": false,
+                                            "name": "enabled",
+                                            "setting_sources": null,
+                                            "type": "bool",
+                                            "value": false,
+                                            "pdb_type": null
+                                        },
+                                        {
+                                            "default_value": "Visible",
+                                            "gui_type": null,
+                                            "name": "display_name",
+                                            "tags": [
+                                                "ignore_initialize_gui"
+                                            ],
+                                            "setting_sources": null,
+                                            "value": "Visible",
+                                            "pdb_type": null,
+                                            "type": "string"
+                                        },
+                                        {
+                                            "default_value": null,
+                                            "gui_type": null,
+                                            "name": "description",
+                                            "setting_sources": null,
+                                            "value": null,
+                                            "pdb_type": null,
+                                            "type": "string"
+                                        },
+                                        {
+                                            "default_value": [
+                                                "default_constraints"
+                                            ],
+                                            "gui_type": null,
+                                            "name": "action_groups",
+                                            "nullable": true,
+                                            "setting_sources": null,
+                                            "value": [
+                                                "default_constraints"
+                                            ],
+                                            "pdb_type": null,
+                                            "type": "list"
+                                        },
+                                        {
+                                            "default_value": false,
+                                            "gui_type": "expander",
+                                            "name": "more_options_expanded",
+                                            "setting_sources": null,
+                                            "value": false,
+                                            "pdb_type": null,
+                                            "display_name": "_More options",
+                                            "type": "bool"
+                                        },
+                                        {
+                                            "default_value": true,
+                                            "display_name": "Enable for previews",
+                                            "name": "enabled_for_previews",
+                                            "setting_sources": null,
+                                            "value": true,
+                                            "pdb_type": null,
+                                            "type": "bool"
+                                        },
+                                        {
+                                            "default_value": false,
+                                            "gui_type": null,
+                                            "name": "display_options_on_create",
+                                            "setting_sources": null,
+                                            "value": false,
+                                            "pdb_type": null,
+                                            "type": "bool"
+                                        },
+                                        {
+                                            "default_value": "visible",
+                                            "gui_type": null,
+                                            "name": "orig_name",
+                                            "setting_sources": null,
+                                            "value": "visible",
+                                            "pdb_type": null,
+                                            "type": "string"
+                                        },
+                                        {
+                                            "default_value": true,
+                                            "display_name": "Also apply to parent folders",
+                                            "name": "also_apply_to_parent_folders",
+                                            "setting_sources": null,
+                                            "value": true,
+                                            "pdb_type": null,
+                                            "type": "bool"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "setting_attributes": {
+                        "setting_sources": [
+                            "session",
+                            "persistent"
+                        ]
+                    },
+                    "name": "gui",
+                    "settings": [
+                        {
+                            "default_value": false,
+                            "name": "show_more_settings",
+                            "setting_sources": [
+                                "session",
+                                "persistent"
+                            ],
+                            "type": "bool",
+                            "value": true
+                        },
+                        {
+                            "default_value": true,
+                            "gui_type": null,
+                            "name": "name_preview_sensitive",
+                            "setting_sources": [
+                                "session",
+                                "persistent"
+                            ],
+                            "type": "bool",
+                            "value": true
+                        },
+                        {
+                            "default_value": true,
+                            "gui_type": null,
+                            "name": "image_preview_sensitive",
+                            "setting_sources": [
+                                "session",
+                                "persistent"
+                            ],
+                            "type": "bool",
+                            "value": true
+                        },
+                        {
+                            "default_value": true,
+                            "gui_type": null,
+                            "name": "image_preview_automatic_update",
+                            "setting_sources": [
+                                "session",
+                                "persistent"
+                            ],
+                            "type": "bool",
+                            "value": true
+                        },
+                        {
+                            "default_value": true,
+                            "gui_type": null,
+                            "name": "image_preview_automatic_update_if_below_maximum_duration",
+                            "setting_sources": [
+                                "session",
+                                "persistent"
+                            ],
+                            "type": "bool",
+                            "value": true
+                        },
+                        {
+                            "default_value": {},
+                            "name": "name_preview_layers_collapsed_state",
+                            "setting_sources": [
+                                "session",
+                                "persistent"
+                            ],
+                            "type": "images_and_gimp_items",
+                            "value": {
+                                "/Users/angel/Documents/20230914_lrrk2-6m_ymaze/resources/gimp/arenas.xcf": []
+                            }
+                        },
+                        {
+                            "default_value": {},
+                            "name": "image_preview_displayed_layers",
+                            "setting_sources": [
+                                "session",
+                                "persistent"
+                            ],
+                            "type": "images_and_gimp_items",
+                            "value": {
+                                "/Users/angel/Documents/20230914_lrrk2-6m_ymaze/resources/gimp/arenas.xcf": [
+                                    [
+                                        "Layer",
+                                        "094356/arena8 #1"
+                                    ]
+                                ]
+                            }
+                        },
+                        {
+                            "setting_attributes": {
+                                "setting_sources": [
+                                    "session",
+                                    "persistent"
+                                ]
+                            },
+                            "name": "size",
+                            "settings": [
+                                {
+                                    "default_value": [],
+                                    "name": "dialog_position",
+                                    "setting_sources": [
+                                        "session",
+                                        "persistent"
+                                    ],
+                                    "type": "tuple",
+                                    "value": [
+                                        285,
+                                        37
+                                    ]
+                                },
+                                {
+                                    "default_value": [],
+                                    "name": "dialog_size",
+                                    "setting_sources": [
+                                        "session",
+                                        "persistent"
+                                    ],
+                                    "type": "tuple",
+                                    "value": [
+                                        900,
+                                        610
+                                    ]
+                                },
+                                {
+                                    "default_value": 610,
+                                    "name": "paned_outside_previews_position",
+                                    "setting_sources": [
+                                        "session",
+                                        "persistent"
+                                    ],
+                                    "type": "int",
+                                    "value": 610
+                                },
+                                {
+                                    "default_value": 360,
+                                    "name": "paned_between_previews_position",
+                                    "setting_sources": [
+                                        "session",
+                                        "persistent"
+                                    ],
+                                    "type": "float",
+                                    "value": 360
+                                },
+                                {
+                                    "default_value": 400,
+                                    "name": "settings_vpane_position",
+                                    "setting_sources": [
+                                        "session",
+                                        "persistent"
+                                    ],
+                                    "type": "float",
+                                    "value": 400
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

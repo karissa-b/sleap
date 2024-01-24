@@ -1,0 +1,62 @@
+---
+title: "Loc stats"
+author: "AA"
+date: "2023-11-26"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    toc_depth: 2
+    fig_width: 8
+    fig_height: 6
+    fig_align: "center"
+    code_folding: hide
+editor_options:
+  chunk_output_type: console
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  message = FALSE,
+  warning = FALSE,
+  error = FALSE,
+  fig.align = "center"
+)
+knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
+```
+
+```{r packages}
+library(tidyverse)
+library(performance)
+library(kableExtra)
+```
+
+```{r}
+base_dir <- "/Users/angel/Documents/20230914_lrrk2-6m_ymaze"
+
+cols <- c("fish_id", "bin", "trial", "machine")
+data <- read_csv(paste0(base_dir, "/data/processed/loc_stats_df_10m.csv")) %>%
+  mutate_at(all_of(vars(cols)), factor) %>%
+  mutate(genotype = factor(genotype, levels=c("wt", "het", "hom")))
+
+# removing fish with missing genotype
+data <- data %>%
+  filter(!genotype == "Error") #%>%
+  # filter(!fish_id == "094356-3")
+
+print(head(data))
+```
+
+```{r}
+ggplot(data, aes(bin, disp, fill=genotype)) +
+  geom_jitter(aes(colour=genotype, shape=sex)) +
+  geom_boxplot(alpha=0.5, outlier.shape=NA)
+  # geom_line
+```
+
+```{r}
+ggplot(data, aes(fill=genotype)) +
+  geom_histogram(aes(disp), position="identity", alpha = 0.6)
+```
+

@@ -1,0 +1,386 @@
+---
+title: "Data preprocessing"
+author: "Angel Allen"
+date: "2023-11-08"
+output: html_document
+editor_options:
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+# Show rendered document in the viewer pane instead of saving to an .html file
+knit2 <- function(filename = rstudioapi::getSourceEditorContext()$path, output_dir = tempdir()) {
+  result <- rmarkdown::render(filename, output_dir = output_dir)
+  getOption("viewer")(result)
+}
+```
+
+# Introduction
+- lrrk2 G2009S 6 months old
+- Video in Y-maze
+
+Here I will be analysing the raw tracking data to determine whether any tracking errors occurred. I will then do some data cleaning, and use linear interpolation to fill in any missing values.
+
+# Setup
+```{r packages}
+library(tidyverse)
+library(readxl)
+
+source("scripts/missing_values.R")
+```
+
+# Importing data
+```{r trials}
+raw_data_path <- "raw_data/20230921_tracking"
+
+# This helps map the file names to their trial and video number
+trials <- tibble(
+  filename = list.files(raw_data_path, "^Raw data"),
+  trialnum = rep(c("1.1", "1.2", "2.1", "2.2", "3.1", "3.2"), each = 3),
+  # numfish = rep(c(8, 8, 8, 8, 5, 4), each = 3),
+  vidnum = rep(c(1:3), times = 6)
+)
+head(trials)
+```
+
+```{r import}
+source("scripts/import_data.R")
+
+# data <- import_data(trials, raw_data_path)
+# head(data)
+
+# Saving the amalgamated data
+# output_path <- "processed_data/20231109_all_raw_data"
+# write_csv(data, paste0(output_path, ".csv"))
+# write_rds(data, paste0(output_path, ".rds"))
+
+data <- read_rds("processed_data/20231109_all_raw_data.rds")
+# data <- read_rds("processed_data/20230921_all_raw_data.rds")
+head(data)
+```
+
+Not all arenas were used for all trials, so I am manually adjusting the metadata spreadsheet here to account for this.
+```{r metadata}
+# Metadata with fish_id
+# Data structure: fish_id, sex, genotype, trial
+meta <- read_csv("metadata.csv", col_types = "ffff") %>%
+  group_by(trial) %>%
+  mutate(arena = row_number()) %>% # this should match the number of fish in each trial
+  ungroup()
+head(meta)
+
+# Number of fish in each arena
+num_fish <- meta %>% group_by(trial) %>%
+  summarise(num_fish = max(arena))
+num_fish
+
+# Merging the raw data with the metadata
+data2 <- data %>%
+    left_join(meta, by = c("trial", "arena")) %>%
+    # select(-arena) %>%
+    mutate(across(c(trial, video), as.factor)) %>%
+    drop_na(fish_id)
+head(data2)
+
+# nrow(data) # 1554776
+# nrow(data2) # 1328036
+# Data removed where there was no fish_id (empty arena)
+```
+
+I will now check that the import process went as expected.
+
+I have 41 fish, so would expect the number of rows imported to be divisible by 41. However, due to slight differences in the video length, this may not be the case. I will group the data by trial and video
+
+```{r}
+table(data2$trial, data2$video) %>% # calculate nrows for each video
+  as.data.frame() %>%
+  left_join(num_fish, by = join_by(Var1 == trial)) %>%
+  mutate(div = Freq%%num_fish) # getting the modulo
+# The "div" column should show 0 for all rows. This indicates that the number of rows in the data matches the number of fish.
+```
+
+Looks good!
+
+Now I'm going to convert the video time into trial time:
+```{r}
+times <- data2 %>%
+  group_by(trial, video) %>%
+  summarise(max_time = max(time)) %>%
+  mutate(
+    max_time2 = cumsum(max_time),
+    base_time = lag(max_time2, default = 0)
+  ) %>%
+  ungroup()
+times
+
+data2 <- left_join(data2, times[,c("trial", "video", "base_time")], by = c("trial", "video")) %>%
+  mutate(time2 = base_time + time)
+data2
+
+do.call(cbind, lapply(select(data2, time, time2), summary))
+
+# write_rds(data2, "processed_data/20230921_all_raw_data2.rds")
+```
+
+
+# Quality control
+
+## Raw data summary
+```{r missing values 1}
+do.call(cbind, lapply(select(data2, x, y), summary))
+```
+
+```{r}
+ggplot(data2, aes(x = fish_id, y = x, fill = genotype)) + 
+  geom_boxplot()
+```
+
+This boxplot shows that the coordinates are relative to the whole video, not each arena.
+
+##### 20231109 tracking
+- 32,821 missing values this time, which is worse than before
+
+##### 20230921 tracking
+- There are 24,915 missing values overall
+- I will visualise these missing values over time
+
+## Missing values
+```{r missing values 2}
+missing_values <- data2 %>%
+  mutate(
+    x_missing = ifelse(is.na(x), T, F),
+    y_missing = ifelse(is.na(y), T, F)
+  ) %>% 
+  select(fish_id, time, video, x_missing, y_missing) %>%
+  pivot_longer(cols = c(x_missing, y_missing), names_pattern = "(^.)", names_to = "coord", values_to = "missing") %>%
+  mutate(missing = factor(missing, levels = c(TRUE, FALSE)))
+
+ggplot(missing_values[missing_values$fish_id %in% c(1:10),], aes(x = time, y = fish_id, fill = missing)) +
+  geom_tile() +
+  facet_wrap(~video)
+```
+
+Fish 1 appears to not have been tracked for the majority of its second and third videos, but video 1 looks fine. I will now plot the number of missing values for all fish to identify which videos need to be retracked.
+
+```{r missing values 3}
+sum_missing_values <- data2 %>%
+  group_by(fish_id, video) %>%
+  summarise(x_missing = sum(is.na(x)),
+            y_missing = sum(is.na(y))) %>%
+  pivot_longer(cols = c(x_missing, y_missing), names_pattern = "(^.)", names_to = "coord", values_to = "missing")
+
+ggplot(sum_missing_values, aes(x = fish_id, y = missing, fill = coord)) +
+  geom_col(position = "dodge") +
+  coord_flip() +
+  facet_wrap(~video)
+```
+
+##### 20230921 tracking
+This shows that tracking needs to be redone for fish 1 in videos 1 and 2, and fish 33 in video 3. There are some errors for other fish, so I will determine where in the video they lie.
+
+##### 20231109 tracking
+This time only fish 37 is untracked, it looks like for all three videos. Because the tracking from the first time was okay for this fish, I will use that data. There is some tracking missing for fish 32 as well, so I will check where in the video it occurs.
+
+```{r}
+# fish_to_check <- c(2:4, 6:8, 17:20, 22:24, 32:34, 36, 39)
+fish_to_check <- c(32, 34, 36)
+
+ggplot(missing_values[missing_values$fish_id %in% fish_to_check,], aes(x = time, y = fish_id, fill = missing)) +
+  geom_tile() +
+  facet_wrap(~video)
+```
+
+##### 20230921 tracking
+Most errors appear to occur near the beginning of the video, particularly for fish 33 videos 1 and 2. I will play with the EthoVision tracking parameters and retry the tracking.
+
+##### 20231109 tracking
+The errors appear at the very start of video 1 and 2 for fish 32, and the start of video 3 for fish 36. I don't see the errors for fish 34.
+
+I will now import the processed data from the first tracking event and swap out fish 37. Additionally, I will fill in some gaps by merging the datasets wherever there are NA values.
+
+```{r}
+# data_20230921 <- 
+#   # read_rds("processed_data/20230921_all_raw_data.rds") %>%
+#   import_data(trials, raw_data_path) %>%
+#   left_join(meta, by = c("trial", "arena")) %>%
+#   mutate(across(c(trial, video), as.factor)) %>%
+#   drop_na(fish_id) %>%
+#   left_join(times[,c("trial", "video", "base_time")], by = c("trial", "video")) %>%
+#   mutate(time2 = base_time + time)
+# head(data_20230921)
+
+# write_rds(data_20230921, "processed_data/20230921_all_raw_data.rds")
+
+data2 <- read_rds("processed_data/20231109_all_raw_data2.rds")
+data_20230921 <- read_rds("processed_data/20230921_all_raw_data2.rds")
+
+data3 <- data2 %>%
+  subset(!fish_id == 37) %>%
+  rbind(data_20230921 %>%
+          subset(fish_id == 37))
+head(data3)
+
+data4 <- rows_patch(data3, data_20230921, by = c("fish_id", "time", "video"), unmatched = "ignore")
+
+# write_csv(data4, "processed_data/20231110_data4.csv")
+# write_rds(data4, "processed_data/20231110_data4.rds")
+```
+
+Checking the tracking for this new dataset:
+```{r}
+source("scripts/missing_values.R")
+
+a <- sum_missing_values(data3, "data3")
+b <- sum_missing_values(data4, "data4")
+
+ggpubr::ggarrange(a, b, common.legend = T)
+```
+
+- I initially thought something went wrong here as it looked worse than before, but this was because the scale of the x-axis changed. I may fix up the scripts to provide the proportion of missing values in the video instead.
+- This is looking good now. I will check where the missing values are, then use linear interpolation to fill them in
+
+```{r}
+fish_to_check <- c(22, 32, 33, 36, 39)
+missing_values(data4, fish_to_check)
+```
+
+There only seem to be significant tracking issues for fish 32 and 39 at the beginning of video 1 and 3 respectively. I will now generate a summary of the missing values so that I can check the videos manually.
+
+### Interpolation
+```{r}
+# Linear interpolation
+data5 <- data4 %>%
+  group_by(fish_id) %>%
+  mutate(
+    status = ifelse(is.na(area), "interpolated", "original"),
+    x = ifelse(is.na(x), approxfun(time2, x, method = "linear")(time2), x),
+    y = ifelse(is.na(y), approxfun(time2, y, method = "linear")(time2), y)
+  ) %>% ungroup
+
+do.call(cbind, lapply(select(data5, x, y), summary)) # no missing values!
+
+# Spline interpolation
+data6 <- data4 %>%
+  group_by(fish_id) %>%
+  mutate(
+    status = ifelse(is.na(area), "interpolated", "original"),
+    x = zoo::na.spline(x),
+    y = zoo::na.spline(y)
+  ) %>% ungroup
+
+do.call(cbind, lapply(select(data6, x, y), summary)) # no missing values!
+
+# If the area is NA, then the x,y values were interpolated
+a <- ggplot(subset(data5, is.na(area)), aes(x = x, y = y, colour = time2, label = fish_id)) +
+  geom_point() +
+  geom_text() +
+  ggtitle("Linear interpolation")
+
+b <- ggplot(subset(data6, is.na(area)), aes(x = x, y = y, colour = time2, label = fish_id)) +
+  geom_point() +
+  geom_text() +
+  ggtitle("Spline interpolation")
+
+ggpubr::ggarrange(a, b, common.legend = T)
+
+# Which fish has data been interpolated for?
+data5 %>%
+  subset(is.na(area)) %>%
+  distinct(fish_id) %>%
+  left_join(meta)
+```
+
+There are differences between the different interpolation methods, see points for fish 22.
+
+To assess the quality of the interpolated coordinates I will use python to overlay the points on the video frames.
+
+```{r}
+# write_csv(data5, "processed_data/lin_interp_data.csv")
+# write_csv(data6, "processed_data/spl_interp_data.csv")
+
+# write_rds(data5, "processed_data/lin_interp_data.rds")
+# write_rds(data6, "processed_data/spl_interp_data.rds")
+```
+
+I probably need to retrack the videos again...
+
+Going to try and better identify missing tracking
+
+```{r}
+data4 <- read_rds("processed_data/20231110_data4.rds")
+do.call(cbind, lapply(select(data4, x, y), summary)) # 102 missing values
+sum_missing_values(data4)
+
+missing_data <- subset(data4, is.na(area))
+
+fish_to_check <- data4 %>% 
+  subset(is.na(area)) %>%
+  distinct(fish_id) %>% pull()
+
+missing_values(data4, fish_to_check)
+
+data5 <- subset(data4, fish_id %in% fish_to_check)
+
+runs <- rle(is.na(data5$area)) %>% unclass() %>% as_tibble()
+
+missing_runs <- vector("list", sum(runs$values == TRUE))
+j <- 1
+for (i in seq_along(runs$lengths)) {
+  if (runs$values[i] == TRUE) {
+    start <- sum(runs$lengths[seq_len(i - 1)]) + 1
+    end <- sum(runs$lengths[seq_len(i)])
+    
+    run_info <- data5[start:end,]
+    max <- max(run_info$time2, na.rm = TRUE)
+    min <- min(run_info$time2, na.rm = TRUE)
+    
+    missing_runs[[j]] <- tibble(
+      fish_id = run_info[1,"fish_id"],
+      min_time = min,
+      max_time = max,
+      trial = run_info[1,"trial"],
+      video = run_info[1,"video"]
+    )
+    j <- j + 1
+  }
+}
+
+data6 <- do.call(rbind, missing_runs)
+```
+
+## Tracking errors
+To analyse whether there were any tracking errors, I will look at the displacement or difference in x/y position between each sample.
+
+```{r displacement}
+x <- data4 %>%
+  mutate(x_disp = abs(x-lag(x)),
+         y_disp = abs(y-lag(y))) %>%
+  pivot_longer(cols = c(x_disp, y_disp),
+               names_to = "coord",
+               values_to = "disp",
+               names_pattern = "(^.)") %>%
+  select(fish_id, time, coord, disp)
+
+ggplot(subset(x, fish_id %in% c(1:10)), aes(x = time, y = disp)) +
+  geom_line() +
+  facet_wrap(~coord)
+```
+
+These show a large spike at the beginning, which is where most tracking errors occur. They appear to be quite noisy.
+
+```{r}
+summary(x$disp)
+```
+
+The mean displacement is 0.22, Q3 is 0.33, and the max is 32. There are already 53,114 missing values.
+
+I want to know which fish have noisy data.
+
+```{r}
+x %>% 
+  group_by(fish_id, coord) %>%
+  do.call(cbind, lapply(select(., disp), summary))
+```
+

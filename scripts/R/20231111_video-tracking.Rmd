@@ -1,0 +1,35 @@
+---
+title: "Video tracking"
+author: "AA"
+date: "2023-11-10"
+output: html_document
+editor_options:
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r packages}
+library(tidyverse)
+library(pathtrackr)
+```
+
+Following these instructions: [GitHub](https://github.com/aharmer/pathtrackr/)
+
+I want to quickly test whether the original or background subtracted video will be better to use.
+
+```{r}
+# Concatenated video
+splitVideo("/Users/angel/Documents/videos/concatenated/20230914T094356.avi", fps = 10)
+```
+
+```{r}
+splitVideo("/Users/angel/Documents/videos/concatenated/20230914T094356.avi", fps = 10)
+```
+
+```{r}
+path.list = trackPath(dirpath, xarena, yarena, fps = 30, box = 1, jitter.damp = 0.9)
+```
+

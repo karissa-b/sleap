@@ -1,0 +1,188 @@
+---
+title: "Analysis"
+author: "Angel Allen"
+date: "2023-09-25"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    toc_depth: 2
+    fig_width: 8
+    fig_height: 6
+    fig_align: "center"
+    code_folding: hide
+editor_options:
+  chunk_output_type: console
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  message = FALSE,
+  warning = FALSE,
+  error = FALSE,
+  fig.align = "center"
+)
+knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
+```
+
+```{r packages}
+library(tidyverse)
+library(kableExtra)
+```
+
+
+2023-09-26
+Here I will be trying a quick analysis of my data. I now have the genotypes (will be repeating to confirm them though), so will need to join them to my processed data.
+
+```{r}
+meta <- read_csv("metadata.csv", col_types = "ffff")
+data <- read_csv("processed_data/final_data.csv", col_types = "ff") %>%
+  left_join(meta, by = "fish_id") %>%
+  mutate(bin = fct_inseq(bin))
+
+# removing fish with missing genotype
+data <- data %>%
+  filter(!genotype == "Error")
+```
+
+First should look at the genotype proportions
+
+```{r}
+table(meta$genotype) %>% proportions() %>%
+  pie(labels = paste0(round(.*100), "%"), main = "Genotype proportions in tested family")
+legend("topleft", legend = c("wt", "het", "hom"),
+        fill = c("white", "lightblue", "mistyrose"))
+
+table(meta$genotype, meta$trial) %>% addmargins()
+```
+
+These look good.
+
+I will do the analysis that KB did in `2021_MPSIII_ZantiksY-maze/naglu-3m-Ymaze`
+
+## Visualisation of raw data
+```{r}
+# summarise data for whole trial (over time bins)
+# removing the period of light at the end (bins 13:18)
+sum_data <- data %>%
+  dplyr::filter(bin %in% c(1:12)) %>%
+  group_by(fish_id, genotype, sex, trial) %>%
+  summarise(across(c(everything(), -bin), sum)) %>%
+  ungroup()
+
+# converting to long format for plotting
+tet_cols <- grep("[L|R]{4}", colnames(data), value = T)
+sum_data_long <- sum_data %>%
+  pivot_longer(tet_cols, names_to = "tetragram", values_to = "count")
+
+sum_data_long %>%
+  dplyr::filter(fish_id %in% c(1:5)) %>%
+  ggplot(aes(x = tetragram, y = count, fill = tetragram)) +
+  geom_col() +
+  facet_wrap(~fish_id, ncol = 1)
+```
+
+- From this quick look, it is clear that fish 3 either did not move much or there were tracking errors
+- Fish 2 and 5 performed more of the non-alternation tetragrams. Fish 4 strongly preferred the alternation tetragrams
+
+I will now do this as a boxplot and look at the sex and genotype
+
+```{r}
+ggplot(sum_data_long, aes(x = tetragram, y = count)) +
+  geom_jitter(aes(colour = tetragram, shape = sex)) +
+  geom_boxplot(aes(fill = genotype, alpha = 0.2), outlier.shape = NA)
+```
+
+- There don't seem to be any obvious differences
+- Will now look at the alternation tetragrams over time
+
+```{r}
+data %>%
+  select(fish_id, genotype, bin, sex, alts) %>%
+  ggplot(aes(x = genotype, y = alts, fill = genotype)) +
+  geom_boxplot(alpha = 0.5, outlier.shape = NA) +
+  geom_jitter(aes(shape = sex)) +
+  facet_wrap(~bin, nrow = 1) +
+  ggtitle("Alternations")
+```
+
+This is possibly showing more alternations by the mutants in the first 1:6 time bins. There is a decrease in alternations for all fish from bin 13:18 (light period), indicating lower activity.
+
+Next plotting the relative alternations (controlling for how active the fish is).
+
+```{r}
+data %>%
+  select(fish_id, genotype, bin, sex, rel_alts) %>%
+  ggplot(aes(x = genotype, y = rel_alts, fill = genotype)) +
+  geom_boxplot(alpha = 0.5, outlier.shape = NA) +
+  geom_jitter(aes(shape = sex)) +
+  facet_wrap(~bin, nrow = 1) +
+  ggtitle("Relative alternations")
+```
+
+This shows a decrease in alternations for all fish for the light period again. There don't appear to be any differences between genotypes for the dark period. Because there appeared to be some difference in the raw alternations, perhaps there is a difference in activity between the wildtype and mutant fish.
+
+## Locomotion
+
+First looking at the total number of turns
+
+```{r}
+ggplot(sum_data, aes(x = genotype, y = total_turns)) +
+  geom_violin(aes(fill = genotype), alpha = 0.5) +
+  geom_boxplot(fill = NA, width = 0.25, alpha = 0.5) +
+  geom_jitter(aes(shape = sex)) +
+  ggtitle("Total number of turns")
+```
+
+Using a negative binomial GLM to determine whether genotype has a significant effect on the total number of turns:
+
+```{r}
+sum_data %>%  
+  dplyr::select(colnames(meta), total_turns) %>%
+  MASS::glm.nb(total_turns ~ genotype + sex + trial, data = .) %>%
+  summary() %>%
+  .$coef %>%
+  kable(caption = "Negative binomial GLM model coefficients.
+        None of the factors have a significant effect on the total number of turns" ) %>%
+  kable_styling()
+```
+
+This says that almost all of the variables are very significant.
+
+## Time spent in zones
+Will return to this later as I don't have the data
+
+## Checking for handedness
+Fontana2019 showed that tetragrams can be altered by handedness/turn bias rather than working memory. Some fish prefer to turn a certain direction.
+
+```{r}
+# make the LR bias object
+bias <- sum_data %>%
+  dplyr::select(L, R, total_turns, fish_id) %>%
+  group_by(fish_id) %>%
+  mutate(
+    r_prop = R/total_turns,
+    l_prop = L/total_turns,
+    lr_bias = case_when(
+      L/total_turns > 0.6 ~ "Left",
+      R/total_turns > 0.6 ~ "Right",
+      TRUE ~ "Neither"
+    ) %>% as.factor()
+  )
+
+final_data %>%
+  left_join(LR_Bias) %>%
+  group_by(fish_id) %>%
+  mutate(L = sum(L),
+         R = sum(R),
+         total_turns = sum(total_turns)
+  ) %>%
+  ggplot(aes(L, R, colour = Genotype)) +
+  geom_point(aes(shape = L_R_bias),
+             size = 2) +
+  stat_ellipse(aes(colour = L_R_bias), alpha = 0.5) +
+  scale_color_manual(values = c(viridis_pal(end=0.75)(3), 
+                               rep("black", 3))
+  )
+```
