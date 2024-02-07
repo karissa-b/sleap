@@ -15,7 +15,7 @@ base_dir = sys.argv[1] if len(sys.argv) > 1 else "/Users/angel/Documents/2023091
 input_dir = sys.argv[2] if len(sys.argv) > 2 else "/Users/angel/Desktop/vid"
 
 bg_dir = f"{base_dir}/resources/backgrounds"
-arenas_dir = f"{base_dir}/resources/masks/arenas"
+arenas_base = f"{base_dir}/resources/masks/arenas"
 data_dir = f"{base_dir}/data/processed"
 output_dir = f"{os.path.dirname(input_dir)}/processed2"
 
@@ -31,7 +31,7 @@ print(f"Found {len(vid_paths)} videos.")
 print(f"base_dir: {base_dir}")
 print(f"input_dir: {input_dir}")
 print(f"bg_dir: {bg_dir}")
-print(f"arenas_dir: {arenas_dir}")
+print(f"arenas_base: {arenas_base}")
 print(f"data_dir: {data_dir}")
 print(f"output_dir: {output_dir}")
 print("videos:")
@@ -42,9 +42,10 @@ arena_rotations = [0, None, 2, 2, 0, 0, 1, 2]
 
 ## FUNCTIONS
 
-def get_arenas(vid_path, arenas_dir):
+def get_arenas(vid_path, arenas_base):
     name = re.search("(?<=T)\d+", vid_path).group(0)
-    arena_dirs = np.sort(glob(f"{arenas_dir}/{name}/*"))
+    arena_dirs = np.sort(glob(f"{arenas_base}/*{name}*"))
+    print(f"arena_dirs: {arena_dirs}")
     arenas = {}
     for i, dir in enumerate(arena_dirs):
         arenas[i] = cv2.imread(glob(f"{dir}/arena{i+1}*.png")[0], cv2.IMREAD_GRAYSCALE)
@@ -83,7 +84,7 @@ def crop_rotate(frame, mask, rotation):
 
 ## SCRIPT
 # Get arena data
-arenas = [get_arenas(i, arenas_dir) for i in vid_paths]
+arenas = [get_arenas(i, arenas_base) for i in vid_paths]
 print(f"Loaded arena masks for {len(arenas)} videos.")
 print(f"{len(arenas[0])} arenas per video.")
 

@@ -1,9 +1,15 @@
 #!/bin/bash
 
-vid_dir=$1
+cd raw_videos/
+files=`ls *.avi`
 
-for i in $(ls "$vid_dir")
+echo $files
+
+for i in $files
 do
+    
     name=$(cut -d "." -f1 <<< "$(basename "$i")")
-	ffmpeg -ss 00:00:01 -i "$i" -frames:v 1 "resources/frames/${name}_frame.jpg"
+	echo $name
+    ffmpeg -ss 00:00:01 -i "$i" -frames:v 1 "/Users/karissabarthelson/analyses/sleap/resources/frames/${name}_frame.jpg"
+
 done
